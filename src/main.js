@@ -1,8 +1,11 @@
-//Call load data
-loadData();
+$(document).ready(function() {
+
+    myApp.loadData();
+
+});
 
 // Load JSON + CSV files
-function loadData() {
+myApp.loadData = function() {
 
     // Date parser (https://github.com/mbostock/d3/wiki/Time-Formatting)
     var formatDate = d3.time.format("%Y");
@@ -23,15 +26,15 @@ function loadData() {
             });            
 
             //Pass in processed data here
-            createVis(usMap, odData);
+            myApp.createVis(usMap, odData);
         });
 };
 
-function createVis(usMap, odData) {
+myApp.createVis = function (usMap, odData) {
 
     //console.log(odData);
     //console.log(usMap)
-    var map = new Choropleth("map-area", usMap, odData);
+    var map = new myApp.Choropleth("map-area", usMap, odData);
 
 }
 

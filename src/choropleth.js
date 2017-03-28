@@ -1,15 +1,16 @@
-Choropleth = function(_parentElement, _usMap, _odData){
+myApp.Choropleth = function(_parentElement, _usMap, _odData){
     this.parentElement = _parentElement;
     this.usMap = _usMap; 
     this.odData  = _odData;
     this.initVis();
+    count = 0;
 }
 
 /*=================================================================
 * Initialize visualization (static content, e.g. SVG area or axes)
 *=================================================================*/
 
-Choropleth.prototype.initVis = function(){
+myApp.Choropleth.prototype.initVis = function(){
     var vis = this;
 
     vis.margin = {top: 50, right: 50, bottom: 50, left: 50};
@@ -52,7 +53,7 @@ Choropleth.prototype.initVis = function(){
 /*=================================================================
 * Data Wrangling
 *=================================================================*/
-Choropleth.prototype.wrangleData = function(){
+myApp.Choropleth.prototype.wrangleData = function(){
     var vis = this;
 
     //filter od data by year 2015
@@ -72,7 +73,7 @@ Choropleth.prototype.wrangleData = function(){
  * Function parameters only needed if different kinds of updates are needed
 *=================================================================*/
 
- Choropleth.prototype.updateVis = function(){
+ myApp.Choropleth.prototype.updateVis = function(){
     var vis = this;
 
     //color domain
@@ -116,38 +117,37 @@ Choropleth.prototype.wrangleData = function(){
         })
         .style("stroke", "grey")
         .style("stroke-width", ".5")
+        .style("cursor", "pointer")
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide)
         .on('click', function(d) {
-            vis.getData(d)
+            count = count + 1;
+            vis.getData(d);
         });
    
 }
 
- Choropleth.prototype.getData = function(d) {
+ myApp.Choropleth.prototype.getData = function(d) {
     var vis = this;
 
-    var thisState = d.properties.name;
-    console.log(thisState)
-
     //filter fulldata to this state only
+    var thisState = d.properties.name;
     vis.stateData = vis.odData.filter(function (value) {
         return (value.state == thisState);
     });
-
     console.log(vis.stateData);
 
-    /*/remove old graph
-    d3.selectAll("#line-graph-area")
-        .transition().delay(0).duration(0)
-        .style("opacity", "0")
-        .remove();*/
+    //build new chart
+    setTimeout(function() {
+        var lineGraph = new myApp.LineGraph("line-graph-area", vis.stateData, count);
+    }, 50)
 
-    setTimeout(function() {  
-        var lineGraph = new LineGraph("line-graph-area", vis.stateData);
-    }, 0);
-
+    //remove existing chart
+    myApp.removeGraph(vis.stateData);
 }
+
+
+
 
 
 

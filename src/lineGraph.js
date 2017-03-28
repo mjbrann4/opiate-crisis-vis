@@ -1,6 +1,7 @@
-LineGraph = function(_parentElement, _data){
+myApp.LineGraph = function(_parentElement, _data, _chartID){
   this.parentElement = _parentElement;
   this.stateData = _data;
+  this.chartID = _chartID;
 
   //console.log(this.stateData)
 
@@ -11,7 +12,7 @@ LineGraph = function(_parentElement, _data){
 * Initialize visualization (static content, e.g. SVG area or axes)
 *=================================================================*/
 
-LineGraph.prototype.initVis = function(){
+myApp.LineGraph.prototype.initVis = function(){
     var vis = this;
 
     vis.margin = {top: 100, right: 50, bottom: 50, left: 100};
@@ -21,10 +22,12 @@ LineGraph.prototype.initVis = function(){
     vis.height = 400 - vis.margin.top - vis.margin.bottom;
 
     vis.svg = d3.select("#line-graph-area").append("svg")
+        .attr("id", "a" + vis.chartID)
         .attr("width", vis.width + vis.margin.left + vis.margin.right)
-        .attr("height", vis.height + vis.margin.top + vis.margin.bottom)
+        .attr("height", vis.height + vis.margin.top + vis.margin.bottom);
 
     vis.g = vis.svg.append("g")
+        //.attr("id", "a" + vis.chartID)
         .attr("transform", "translate(" + vis.margin.left + "," + vis.margin.top + ")");
 
     // X and Y Scales
@@ -48,25 +51,34 @@ LineGraph.prototype.initVis = function(){
 
     //Create X axis
     vis.g.append("g")
-       .attr("class", "axis x-axis")
-       .attr("transform", "translate(0," + (vis.height) + ")");
+        .attr("class", "axis x-axis")
+        .attr("transform", "translate(0," + (vis.height) + ")")
+        .style("opacity", 0)
+        .transition().duration(750).style("opacity", 1);
 
     //Create Y axis
     vis.g.append("g")
-       .attr("class", "axis y-axis")
-       .attr("transform", "translate(0,0)");
+        .attr("class", "axis y-axis")
+        .attr("transform", "translate(0,0)")
+        .style("opacity", 0)
+        .transition().duration(750).style("opacity", 1);
 
     //X axis label
     vis.g.append("text")
         .attr("class", "axis-text")
         .attr("transform", "translate(" + (vis.width/2) + "," + (vis.height + vis.margin.bottom/1.5) + ")")
-        .text("Year");
+        .text("Year")
+        .style("opacity", 0)
+        .transition().duration(750).style("opacity", 1);
 
     //Y axis label
     vis.g.append("text")
         .attr("class", "axis-text")
-        .attr("transform", "translate(-40," + (vis.height/2) + ")rotate(-90)")
-        .text("Overdose Rate per 100,000 people");
+        .attr("transform", "translate(-45," + (vis.height/2) + ")rotate(-90)")
+        .text("Number of Overdose Deaths")
+        //.text("Overdose Rate per 100,000 people");
+        .style("opacity", 0)
+        .transition().duration(750).style("opacity", 1);
 
 
     // TO-DO: (Filter, aggregate, modify data)
@@ -76,7 +88,7 @@ LineGraph.prototype.initVis = function(){
 /*=================================================================
 * Data Wrangling
 *=================================================================*/
-LineGraph.prototype.wrangleData = function(){
+myApp.LineGraph.prototype.wrangleData = function(){
     var vis = this;
 
     //No data wrangling needed here for now
@@ -91,20 +103,20 @@ LineGraph.prototype.wrangleData = function(){
  * Function parameters only needed if different kinds of updates are needed
 *=================================================================*/
 
- LineGraph.prototype.updateVis = function(){
+ myApp.LineGraph.prototype.updateVis = function() {
     var vis = this;
 
     //Scale domains
     vis.x.domain([d3.min(vis.stateData, function(d) { return d.year;}),
              d3.max(vis.stateData, function(d) { return d.year;})])
 
-    vis.y.domain([d3.min(vis.stateData, function(d) { return d.rate;})-5,
-             d3.max(vis.stateData, function(d) { return d.rate;})+5])
+    vis.y.domain([d3.min(vis.stateData, function(d) { return d.num_deaths;})-5,
+             d3.max(vis.stateData, function(d) { return d.num_deaths;})+5])
 
     //Line functions
     vis.line = d3.svg.line()
         .x(function(d) { return vis.x(d.year); })
-        .y(function(d) { return vis.y(d.rate); })
+        .y(function(d) { return vis.y(d.num_deaths); })
         .interpolate("monotone");  
 
 
@@ -132,17 +144,30 @@ LineGraph.prototype.wrangleData = function(){
         .datum(vis.stateData)
         .attr("class", "line")
         .attr("d", vis.line)
-        .attr("opacity", .7);
+        .style("opacity", 0)
+        .transition().duration(500).style("opacity", .7);
 
     var totalLength = vis.linePath.node().getTotalLength();
     
-        vis.linePath
+    vis.linePath
         .attr("stroke-dasharray", totalLength + " " + totalLength)
         .attr("stroke-dashoffset", totalLength)
         .transition()
             .duration(2000)
             .ease("linear")
             .attr("stroke-dashoffset", 0);
+
+
+    //State label
+    var text = vis.g.selectAll("title-text.text")
+        .data(vis.stateData)
+        .enter()
+        .append('text')
+        .attr("class", "title-text")
+        .attr("transform", "translate(" + (vis.width/2) + "," + (-10) + ")")
+        .text(function(d) {return "Overdose deaths in " + d.state;})
+        .style("opacity", 0)
+        .transition().duration(750).style("opacity", 1);
 
 
     //Update X axis
